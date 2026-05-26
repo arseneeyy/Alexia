@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alexia & Arsenij</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{background:#1a1a2e}
+body{font-family:'Press Start 2P',monospace;background:#1a1a2e;min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;padding:14px 10px 36px}
+
+.ds{width:100%;max-width:380px;background:#b8c0d0;border-radius:14px 14px 55px 55px;
+  border:4px solid #7a8090;padding:12px 16px 30px;
+  box-shadow:inset 0 2px 0 #e0e8f4,inset 0 -4px 0 #8890a0,4px 8px 0 #0a0a14}
+.ds-top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.led{width:7px;height:7px;background:#44ff88;border-radius:50%;box-shadow:0 0 5px #44ff88;animation:blink 3s ease-in-out infinite}
+@keyframes blink{0%,90%,100%{opacity:1}95%{opacity:.2}}
+.brand{font-size:5px;color:#5a6070;letter-spacing:2px}
+
+.top-screen{background:#000;border:3px solid #3a3a4a;border-radius:3px;overflow:hidden;position:relative;height:200px}
+.screen-divider{height:7px;background:#3a3a4a;border-top:2px solid #2a2a3a;border-bottom:2px solid #505060}
+.bot-screen{background:#000;border:3px solid #3a3a4a;border-top:none;border-radius:3px;overflow:hidden;min-height:90px}
+
+/* shared screen layer */
+.screen-layer{position:absolute;inset:0;display:none;flex-direction:column}
+.screen-layer.active{display:flex}
+
+/* BATTLE */
+.bfield{flex:1;position:relative;background:#9bbc0f}
+.grass-strip{position:absolute;bottom:0;left:0;right:0;height:36px;
+  background:repeating-linear-gradient(90deg,#306230 0,#306230 7px,#0f380f 7px,#0f380f 14px)}
+.plat{position:absolute;border-radius:50%;border-bottom:3px solid #0f380f;background:#306230}
+.hpbox{position:absolute;background:#e0f0d0;border:2px solid #0f380f;padding:4px 6px;font-size:5px;line-height:1.9;min-width:96px}
+.hp-name{font-size:6px;color:#0f380f}.hp-lv{font-size:5px;color:#306230}
+.hp-track{width:80px;height:5px;background:#0f380f;margin-top:1px}
+.hp-fill{height:100%;transition:width .4s ease,background .4s ease}
+.hp-nums{font-size:5px;color:#0f380f;margin-top:1px}
+.spr{position:absolute;image-rendering:pixelated}
+
+.dlg-box{background:#e0f0d0;border:2px solid #0f380f;padding:7px 10px;min-height:48px;position:relative}
+.dlg-txt{font-size:6.5px;line-height:1.9;color:#0f380f;white-space:pre-wrap}
+.dlg-arr{position:absolute;bottom:4px;right:7px;font-size:7px;color:#0f380f;
+  animation:ab .8s ease-in-out infinite;display:none}
+@keyframes ab{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+
+/* OVERWORLD */
+#owCanvas{display:block;image-rendering:pixelated;width:100%;height:200px}
+
+/* bottom panels */
+.bot-panel{display:none;padding:9px}
+.bot-panel.active{display:block}
+.menu-lbl{font-size:6px;color:#cc99ff;margin-bottom:6px;border-bottom:1px solid #3a2a5e;padding-bottom:4px}
+.move-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.mv{background:#0a0818;border:2px solid #5a3a8e;padding:7px 5px;text-align:center;
+  cursor:pointer;border-radius:2px;user-select:none;transition:background .1s}
+.mv:hover{background:#2a1a4e;border-color:#cc99ff}
+.mv:active{transform:scale(.96)}
+.mv.off{opacity:.35;pointer-events:none}
+.mv-name{font-size:6px;color:#e0d0ff;display:block;margin-bottom:2px}
+.mv-pp{font-size:5px;color:#9977cc;display:block;margin-bottom:2px}
+.mv-type{font-size:5px;padding:1px 4px;border-radius:1px;display:inline-block}
+.tf{background:#c0392b;color:#fff}.tw{background:#2471a3;color:#fff}
+.te{background:#b7950b;color:#fff}.ti{background:#1a8fa0;color:#fff}.tn{background:#555;color:#fff}
+.elog{background:#0a0818;border:2px solid #3a5a9e;padding:6px 8px;margin-top:5px;display:none}
+.elog.show{display:block}
+.elog-txt{font-size:6px;color:#88ccff;line-height:2;white-space:pre-wrap}
+
+.ow-status{font-size:5.5px;color:#88ffcc;line-height:2}
+.ow-hint{font-size:4.5px;color:#446688;margin-top:4px}
+
+/* controls */
+.controls{margin-top:12px;display:flex;justify-content:space-between;align-items:center;padding:0 6px}
+.dpad{display:grid;grid-template-columns:16px 16px 16px;grid-template-rows:16px 16px 16px;gap:2px}
+.dp{background:#3a3a4a;border:1px solid #2a2a3a;border-radius:2px;cursor:pointer;user-select:none}
+.dp:active{background:#555}
+.ss{display:flex;gap:6px;flex-direction:column;align-items:center}
+.mb{width:30px;height:6px;background:#5a5a6a;border-radius:3px;border:1px solid #3a3a4a}
+.ml{font-size:4px;color:#6a6a7a}
+.ab{display:flex;gap:7px;align-items:center}
+.bc{border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:6px;
+  cursor:pointer;border:none;font-family:'Press Start 2P',monospace;
+  box-shadow:0 3px 0 rgba(0,0,0,.4);transition:transform .1s,box-shadow .1s;user-select:none}
+.bc:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.4)}
+.ba{width:28px;height:28px;background:#c0392b;color:#fff}
+.bb{width:22px;height:22px;background:#3a3a4a;color:#aaa}
+
+@keyframes shE{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+@keyframes shP{0%,100%{transform:translateX(0)}25%{transform:translateX(5px)}75%{transform:translateX(-5px)}}
+@keyframes fl{0%,100%{opacity:1}50%{opacity:.1}}
+.sh-e{animation:shE .3s ease}.sh-p{animation:shP .3s ease}.fl{animation:fl .3s ease 2}
+
+.overlay{display:none;position:absolute;inset:0;background:rgba(0,0,0,.75);
+  align-items:center;justify-content:center;z-index:20}
+.overlay.show{display:flex}
+.ov-box{background:#e0f0d0;border:3px solid #0f380f;padding:12px;text-align:center;max-width:88%}
+.ov-title{font-size:9px;color:#0f380f;margin-bottom:8px}
+.ov-sub{font-size:5.5px;color:#306230;line-height:2;white-space:pre-wrap}
+.ov-btn{margin-top:10px;background:#0f380f;color:#e0f0d0;border:none;
+  font-family:'Press Start 2P',monospace;font-size:6px;padding:7px 12px;cursor:pointer;border-radius:2px}
+.ov-btn:hover{background:#306230}
+</style>
+</head>
+<body>
+<div class="ds">
+  <div class="ds-top"><div class="led"></div><span class="brand">NintendoDS &#9658;</span></div>
+
+  <div class="top-screen">
+    <!-- INTRO BATTLE: Alexia vs Arsenij -->
+    <div id="introBattle" class="screen-layer active">
+      <div class="bfield" id="ibField">
+        <div class="hpbox" style="top:6px;right:6px">
+          <div class="hp-name">ARSENIJ</div><div class="hp-lv">Lv.1 &#128516;</div>
+          <div style="font-size:5px;color:#0f380f">HP</div>
+          <div class="hp-track"><div class="hp-fill" id="ibEHp" style="width:100%;background:#44aa22"></div></div>
+          <div class="hp-nums" id="ibEHpN">40 / 40</div>
+        </div>
+        <div class="spr" id="ibSprE" style="right:18px;bottom:40px"><canvas id="arsenijC" width="48" height="52"></canvas></div>
+        <div class="spr" id="ibSprP" style="left:10px;bottom:32px"><canvas id="alexiaC" width="64" height="72"></canvas></div>
+        <div class="hpbox" style="bottom:40px;left:6px">
+          <div class="hp-name">ALEXIA</div><div class="hp-lv">Lv.99</div>
+          <div style="font-size:5px;color:#0f380f">HP</div>
+          <div class="hp-track"><div class="hp-fill" id="ibPHp" style="width:100%;background:#44aa22"></div></div>
+          <div class="hp-nums" id="ibPHpN">150 / 150</div>
+        </div>
+        <div class="plat" style="width:76px;height:11px;right:14px;bottom:32px"></div>
+        <div class="plat" style="width:60px;height:10px;left:8px;bottom:24px"></div>
+        <div class="grass-strip"></div>
+        <div class="overlay" id="ibWin">
+          <div class="ov-box">
+            <div class="ov-title">SIEG! &#10084;</div>
+            <div class="ov-sub">ARSENIJ wurde\nbesiegt!\n\nALEXIA gewinnt! &#10084;</div>
+            <button class="ov-btn" onclick="startOverworld()">Zusammen laufen!</button>
+          </div>
+        </div>
+      </div>
+      <div class="dlg-box"><div class="dlg-txt" id="ibDlg"></div><div class="dlg-arr" id="ibArr">&#9660;</div></div>
+    </div>
+
+    <!-- OVERWORLD -->
+    <div id="owLayer" class="screen-layer">
+      <canvas id="owCanvas" width="190" height="200"></canvas>
+    </div>
+
+    <!-- WILD BATTLE -->
+    <div id="wildBattle" class="screen-layer">
+      <div class="bfield" id="wbField">
+        <div class="hpbox" style="top:6px;right:6px">
+          <div class="hp-name" id="wbEName">???</div><div class="hp-lv" id="wbELv">Lv.?</div>
+          <div style="font-size:5px;color:#0f380f">HP</div>
+          <div class="hp-track"><div class="hp-fill" id="wbEHp" style="width:100%;background:#44aa22"></div></div>
+          <div class="hp-nums" id="wbEHpN">-- / --</div>
+        </div>
+        <div class="spr" id="wbSprE" style="right:18px;bottom:40px"><canvas id="wildC" width="56" height="56"></canvas></div>
+        <div class="spr" id="wbSprA" style="left:10px;bottom:32px"><canvas id="alexiaSmC" width="40" height="44"></canvas></div>
+        <div class="spr" id="wbSprB" style="left:48px;bottom:28px"><canvas id="arsenijSmC" width="36" height="44"></canvas></div>
+        <div class="hpbox" style="bottom:40px;left:6px">
+          <div class="hp-name">ALEXIA</div><div class="hp-lv">Lv.99</div>
+          <div style="font-size:5px;color:#0f380f">HP</div>
+          <div class="hp-track"><div class="hp-fill" id="wbPHp" style="width:100%;background:#44aa22"></div></div>
+          <div class="hp-nums" id="wbPHpN">150 / 150</div>
+        </div>
+        <div class="plat" style="width:76px;height:11px;right:14px;bottom:32px"></div>
+        <div class="plat" style="width:80px;height:10px;left:6px;bottom:24px"></div>
+        <div class="grass-strip"></div>
+        <div class="overlay" id="wbWin">
+          <div class="ov-box">
+            <div class="ov-title">SIEG!</div>
+            <div class="ov-sub" id="wbWinTxt">gewonnen!</div>
+            <button class="ov-btn" onclick="resumeOverworld()">Weiter!</button>
+          </div>
+        </div>
+      </div>
+      <div class="dlg-box"><div class="dlg-txt" id="wbDlg"></div><div class="dlg-arr" id="wbArr">&#9660;</div></div>
+    </div>
+  </div>
+
+  <div class="screen-divider"></div>
+  <div class="bot-screen">
+    <!-- intro battle bottom -->
+    <div id="ibBot" class="bot-panel active">
+      <div class="menu-lbl" id="ibMenuLbl">&#9658; Angriff wählen</div>
+      <div class="move-grid" id="ibGrid">
+        <div class="mv" onclick="ibAtk(0)"><span class="mv-name">FEUERBALL</span><span class="mv-pp" id="ibPP0">PP 10/10</span><span class="mv-type tf">FEUER</span></div>
+        <div class="mv" onclick="ibAtk(1)"><span class="mv-name">AQUAKNARRE</span><span class="mv-pp" id="ibPP1">PP 15/15</span><span class="mv-type tw">WASSER</span></div>
+        <div class="mv" onclick="ibAtk(2)"><span class="mv-name">DONNERBLITZ</span><span class="mv-pp" id="ibPP2">PP 10/10</span><span class="mv-type te">ELEKTRO</span></div>
+        <div class="mv" onclick="ibAtk(3)"><span class="mv-name">ARKTIS-STURM</span><span class="mv-pp" id="ibPP3">PP 5/5</span><span class="mv-type ti">EIS</span></div>
+      </div>
+      <div class="elog" id="ibElog"><div class="elog-txt" id="ibElogTxt"></div></div>
+    </div>
+    <!-- overworld bottom -->
+    <div id="owBot" class="bot-panel" style="background:#0a1220">
+      <div class="ow-status" id="owStatus">Lauft zusammen durch die Wiese...</div>
+      <div class="ow-hint">Pfeiltasten / WASD zum Laufen &#9658; begegne wilden Pokemon!</div>
+    </div>
+    <!-- wild battle bottom -->
+    <div id="wbBot" class="bot-panel">
+      <div class="menu-lbl" id="wbMenuLbl">&#9658; Angriff wählen</div>
+      <div class="move-grid" id="wbGrid">
+        <div class="mv" onclick="wbAtk(0)"><span class="mv-name">FEUERBALL</span><span class="mv-pp" id="wbPP0">PP 10/10</span><span class="mv-type tf">FEUER</span></div>
+        <div class="mv" onclick="wbAtk(1)"><span class="mv-name">AQUAKNARRE</span><span class="mv-pp" id="wbPP1">PP 15/15</span><span class="mv-type tw">WASSER</span></div>
+        <div class="mv" onclick="wbAtk(2)"><span class="mv-name">DONNERBLITZ</span><span class="mv-pp" id="wbPP2">PP 10/10</span><span class="mv-type te">ELEKTRO</span></div>
+        <div class="mv" onclick="wbAtk(3)"><span class="mv-name">ARKTIS-STURM</span><span class="mv-pp" id="wbPP3">PP 5/5</span><span class="mv-type ti">EIS</span></div>
+      </div>
+      <div class="elog" id="wbElog"><div class="elog-txt" id="wbElogTxt"></div></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="dpad">
+      <div></div><div class="dp" onmousedown="dpPress('u')" ontouchstart="e=>{e.preventDefault();dpPress('u')}">&#9650;</div><div></div>
+      <div class="dp" onmousedown="dpPress('l')" ontouchstart="e=>{e.preventDefault();dpPress('l')}">&#9668;</div>
+      <div class="dp" style="background:#2a2a3a"></div>
+      <div class="dp" onmousedown="dpPress('r')" ontouchstart="e=>{e.preventDefault();dpPress('r')}">&#9658;</div>
+      <div></div><div class="dp" onmousedown="dpPress('d')" ontouchstart="e=>{e.preventDefault();dpPress('d')}">&#9660;</div><div></div>
+    </div>
+    <div class="ss"><div class="mb"></div><div class="ml">SELECT</div><div class="mb"></div><div class="ml">START</div></div>
+    <div class="ab">
+      <button class="bc bb" onclick="btnB()">B</button>
+      <button class="bc ba" onclick="btnA()">A</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════
+// DRAW HELPERS
+// ════════════════════════════════════════
+function px(ctx,x,y,S,c){ctx.fillStyle=c;ctx.fillRect(x*S,y*S,S,S)}
+
+function drawAlexia(canvas,S){
+  S=S||4;const ctx=canvas.getContext('2d');ctx.clearRect(0,0,canvas.width,canvas.height);
+  const p=(x,y,c)=>px(ctx,x,y,S,c);
+  [[2,0],[3,0],[4,0],[5,0],[6,0],[7,0],[8,0],[9,0],[1,1],[9,1],[10,1],[11,1],[1,2],[10,2],[11,2],[1,3],[11,3],[10,4],[11,4],[10,5],[11,5]].forEach(([x,y])=>p(x,y,'#c04080'));
+  [[3,1],[4,1],[5,1],[6,1],[7,1],[8,1],[2,2],[3,2],[4,2],[5,2],[6,2],[7,2],[8,2],[9,2],[2,3],[3,3],[4,3],[5,3],[6,3],[7,3],[8,3],[9,3],[10,3],[2,4],[3,4],[4,4],[5,4],[6,4],[7,4],[8,4],[9,4],[2,5],[3,5],[4,5],[5,5],[6,5],[7,5],[8,5],[9,5],[2,6],[3,6],[4,6],[5,6],[6,6],[7,6],[8,6],[9,6],[3,7],[4,7],[5,7],[6,7],[7,7],[8,7],[9,7],[5,8],[6,8],[7,8]].forEach(([x,y])=>p(x,y,'#fddbb4'));
+  [[2,0],[3,0],[4,0],[5,0],[6,0],[7,0],[8,0],[9,0],[2,1],[3,1],[4,1],[2,2],[3,2],[2,3]].forEach(([x,y])=>p(x,y,'#d04888'));
+  p(4,0,'#ff99bb');p(6,0,'#ff99bb');
+  [[4,4],[5,4],[7,4],[8,4]].forEach(([x,y])=>p(x,y,'#1a0a2a'));
+  ctx.fillStyle='#fff';ctx.fillRect(4*S+S/2,4*S,S/2,S/2);ctx.fillRect(7*S+S/2,4*S,S/2,S/2);
+  p(3,3,'#1a0a2a');p(9,3,'#1a0a2a');p(3,6,'#ffaaaa');p(9,6,'#ffaaaa');
+  ctx.fillStyle='#e8997a';ctx.fillRect(6*S,6*S,S,S/2);
+  ctx.fillStyle='#c06040';ctx.fillRect(5*S,7*S,S,S/2);ctx.fillRect(7*S,7*S,S,S/2);ctx.fillRect(6*S,7*S+S/2,S*2,S/2);
+  [[3,9],[4,9],[5,9],[6,9],[7,9],[8,9],[9,9],[2,10],[3,10],[4,10],[5,10],[6,10],[7,10],[8,10],[9,10],[10,10],[1,11],[2,11],[3,11],[4,11],[5,11],[6,11],[7,11],[8,11],[9,11],[10,11],[11,11],[1,12],[2,12],[3,12],[4,12],[5,12],[6,12],[7,12],[8,12],[9,12],[10,12],[11,12],[0,13],[1,13],[2,13],[3,13],[4,13],[5,13],[6,13],[7,13],[8,13],[9,13],[10,13],[11,13],[12,13]].forEach(([x,y])=>p(x,y,'#ee77bb'));
+  [[5,10],[6,10],[7,10],[5,11],[6,11],[7,11],[5,12],[6,12],[7,12]].forEach(([x,y])=>p(x,y,'#ff99cc'));
+  p(5,9,'#ff3388');p(6,9,'#fff');p(7,9,'#ff3388');
+  p(2,9,'#fddbb4');p(10,9,'#fddbb4');p(1,10,'#fddbb4');p(11,10,'#fddbb4');
+  [[4,14],[5,14],[7,14],[8,14],[4,15],[5,15],[7,15],[8,15],[4,16],[5,16],[7,16],[8,16]].forEach(([x,y])=>p(x,y,'#fddbb4'));
+  [[3,17],[4,17],[5,17],[6,17],[7,17],[8,17],[9,17]].forEach(([x,y])=>p(x,y,'#882255'));
+}
+
+function drawArsenij(canvas,S){
+  S=S||4;const ctx=canvas.getContext('2d');ctx.clearRect(0,0,canvas.width,canvas.height);
+  const p=(x,y,c)=>px(ctx,x,y,S,c);
+  const d=["..HHHH..","HHHHHHHH",".HssssH.",".HEssEH.",".HssssH.","..ssss..",".SSSSSS.","SSSSSSSS",".SSSSSS.",".PP..PP.",".PP..PP.",".SS..SS."];
+  const m={'H':'#1a1a1a','s':'#fddbb4','E':'#0a0a1a','S':'#2255aa','P':'#112244','.':null};
+  d.forEach((row,y)=>[...row].forEach((c,x)=>m[c]&&p(x,y,m[c])));
+}
+
+function drawWildPokemon(canvas, type, lv){
+  const ctx=canvas.getContext('2d');ctx.clearRect(0,0,canvas.width,canvas.height);
+  const S=4,p=(x,y,c)=>px(ctx,x,y,S,c);
+  if(type===0){ // Grasling - green round blob with leaf
+    [[2,0],[3,0],[4,0],[5,0],[1,1],[2,1],[3,1],[4,1],[5,1],[6,1],[0,2],[1,2],[2,2],[3,2],[4,2],[5,2],[6,2],[7,2],[0,3],[1,3],[2,3],[3,3],[4,3],[5,3],[6,3],[7,3],[0,4],[1,4],[2,4],[3,4],[4,4],[5,4],[6,4],[7,4],[1,5],[2,5],[3,5],[4,5],[5,5],[6,5],[2,6],[3,6],[4,6],[5,6]].forEach(([x,y])=>p(x,y,'#44bb44'));
+    [[3,0],[4,0],[3,1],[4,1]].forEach(([x,y])=>p(x,y,'#228822'));
+    ctx.fillStyle='#1a0a2a';ctx.fillRect(2*S,3*S,S,S);ctx.fillRect(5*S,3*S,S,S);
+    ctx.fillStyle='#ff4444';ctx.fillRect(3*S,5*S,2*S,S/2);
+    // leaf on top
+    [[5,0],[6,0],[6,1],[7,1]].forEach(([x,y])=>p(x,y,'#116611'));
+  } else if(type===1){ // Glutze - fire mouse
+    [[2,1],[3,1],[4,1],[5,1],[1,2],[2,2],[3,2],[4,2],[5,2],[6,2],[1,3],[2,3],[3,3],[4,3],[5,3],[6,3],[1,4],[2,4],[3,4],[4,4],[5,4],[6,4],[2,5],[3,5],[4,5],[5,5]].forEach(([x,y])=>p(x,y,'#ee8833'));
+    [[3,0],[4,0],[4,1],[5,0]].forEach(([x,y])=>p(x,y,'#ffff44')); // flame
+    [[2,1],[3,1]].forEach(([x,y])=>p(x,y,'#ffaa44')); // ears
+    ctx.fillStyle='#1a0a2a';ctx.fillRect(2*S,3*S,S,S);ctx.fillRect(5*S,3*S,S,S);
+    ctx.fillStyle='#ffccaa';ctx.fillRect(3*S,4*S,2*S,S);
+    ctx.fillStyle='#cc2200';ctx.fillRect(6*S,3*S,2*S,S/2); // tail start
+    ctx.fillRect(7*S,2*S,S,S/2);
+  } else { // Plitschi - water drop
+    [[2,0],[3,0],[4,0],[1,1],[2,1],[3,1],[4,1],[5,1],[0,2],[1,2],[2,2],[3,2],[4,2],[5,2],[6,2],[0,3],[1,3],[2,3],[3,3],[4,3],[5,3],[6,3],[0,4],[1,4],[2,4],[3,4],[4,4],[5,4],[6,4],[1,5],[2,5],[3,5],[4,5],[5,5],[2,6],[3,6],[4,6]].forEach(([x,y])=>p(x,y,'#4488ee'));
+    [[1,2],[2,2]].forEach(([x,y])=>p(x,y,'#88ccff')); // shine
+    ctx.fillStyle='#1a0a2a';ctx.fillRect(2*S,3*S,S,S);ctx.fillRect(4*S,3*S,S,S);
+    ctx.fillStyle='#aaddff';ctx.fillRect(2*S,5*S,3*S,S/2);
+  }
+}
+
+// small OW sprites
+function drawOWSprite(ctx,x,y,type,frame){
+  const S=3,p=(px,py,c)=>{ctx.fillStyle=c;ctx.fillRect(x+px*S,y+py*S,S,S)};
+  const walk=frame%2;
+  if(type==='alexia'){
+    [[1,0],[2,0],[3,0],[4,0],[0,1],[5,1]].forEach(([px,py])=>p(px,py,'#d04888'));
+    [[1,1],[2,1],[3,1],[4,1],[1,2],[2,2],[3,2],[4,2],[1,3],[2,3],[3,3],[4,3],[2,4],[3,4]].forEach(([px,py])=>p(px,py,'#fddbb4'));
+    ctx.fillStyle='#1a0a2a';ctx.fillRect(x+1*S,y+2*S,S,S);ctx.fillRect(x+3*S,y+2*S,S,S);
+    [[0,5],[1,5],[2,5],[3,5],[4,5],[5,5],[0,6],[1,6],[2,6],[3,6],[4,6],[5,6]].forEach(([px,py])=>p(px,py,'#ee77bb'));
+    ctx.fillStyle='#fddbb4';
+    if(walk){ctx.fillRect(x+1*S,y+7*S,S,S*2);ctx.fillRect(x+3*S,y+7*S+S,S,S);}
+    else{ctx.fillRect(x+1*S,y+7*S+S,S,S);ctx.fillRect(x+3*S,y+7*S,S,S*2);}
+    ctx.fillStyle='#882255';ctx.fillRect(x+1*S,y+9*S,S,S);ctx.fillRect(x+3*S,y+9*S,S,S);
+  } else {
+    [[1,0],[2,0],[3,0],[4,0]].forEach(([px,py])=>p(px,py,'#1a1a1a'));
+    [[1,1],[2,1],[3,1],[1,2],[2,2],[3,2],[1,3],[2,3],[3,3]].forEach(([px,py])=>p(px,py,'#fddbb4'));
+    ctx.fillStyle='#0a0a1a';ctx.fillRect(x+1*S,y+2*S,S,S);ctx.fillRect(x+3*S,y+2*S,S,S);
+    [[0,4],[1,4],[2,4],[3,4],[4,4],[0,5],[1,5],[2,5],[3,5],[4,5]].forEach(([px,py])=>p(px,py,'#2255aa'));
+    ctx.fillStyle='#112244';
+    if(walk){ctx.fillRect(x+1*S,y+6*S,S,S*2);ctx.fillRect(x+3*S,y+6*S+S,S,S);}
+    else{ctx.fillRect(x+1*S,y+6*S+S,S,S);ctx.fillRect(x+3*S,y+6*S,S,S*2);}
+  }
+}
+
+function drawOWPokemon(ctx,x,y,type){
+  const S=3,p=(px,py,c)=>{ctx.fillStyle=c;ctx.fillRect(x+px*S,y+py*S,S,S)};
+  if(type===0){[[1,0],[2,0],[3,0],[0,1],[1,1],[2,1],[3,1],[4,1],[0,2],[1,2],[2,2],[3,2],[4,2],[1,3],[2,3],[3,3]].forEach(([px,py])=>p(px,py,'#44bb44'));ctx.fillStyle='#1a0a2a';ctx.fillRect(x+1*S,y+1*S,S,S);ctx.fillRect(x+3*S,y+1*S,S,S);}
+  else if(type===1){[[1,1],[2,1],[3,1],[0,2],[1,2],[2,2],[3,2],[4,2],[0,3],[1,3],[2,3],[3,3],[4,3],[1,4],[2,4],[3,4]].forEach(([px,py])=>p(px,py,'#ee8833'));[[2,0],[3,0]].forEach(([px,py])=>p(px,py,'#ffff44'));ctx.fillStyle='#1a0a2a';ctx.fillRect(x+1*S,y+2*S,S,S);ctx.fillRect(x+3*S,y+2*S,S,S);}
+  else{[[1,0],[2,0],[3,0],[0,1],[1,1],[2,1],[3,1],[4,1],[0,2],[1,2],[2,2],[3,2],[4,2],[0,3],[1,3],[2,3],[3,3],[4,3],[1,4],[2,4],[3,4]].forEach(([px,py])=>p(px,py,'#4488ee'));ctx.fillStyle='#88ccff';ctx.fillRect(x,y+S,S,S);ctx.fillStyle='#1a0a2a';ctx.fillRect(x+1*S,y+2*S,S,S);ctx.fillRect(x+3*S,y+2*S,S,S);}
+}
+
+// ════════════════════════════════════════
+// GAME STATE
+// ════════════════════════════════════════
+const WILD_NAMES=['GRASLING','GLUTZE','PLITSCHI'];
+const WILD_COLORS=['#44bb44','#ee8833','#4488ee'];
+
+const IB_MOVES=[{name:"FEUERBALL",pp:10,maxPp:10,power:28,hit:.9},{name:"AQUAKNARRE",pp:15,maxPp:15,power:22,hit:.95},{name:"DONNERBLITZ",pp:10,maxPp:10,power:35,hit:.85},{name:"ARKTIS-STURM",pp:5,maxPp:5,power:45,hit:.8}];
+const IB_EMOVES=[{name:"TACKLE",power:16,flavor:"ARSENIJ setzt\nTACKLE ein!"},{name:"DONNERSCHOCK",power:13,flavor:"ARSENIJ setzt\nDONNERSCHOCK!"},{name:"KRATZER",power:14,flavor:"ARSENIJ setzt\nKRATZER ein!"},{name:"STRUDEL",power:18,flavor:"ARSENIJ setzt\nSTRUDEL ein!"}];
+
+let gameMode='introBattle'; // introBattle | overworld | wildBattle
+let ib={},wb={},ow={};
+let owKeys={},owFrame=0,owTick=0,owRaf=null;
+const TILE=10,MW=19,MH=20;
+let tileMap=[],wilds=[];
+
+// ─── TYPING ENGINE ───────────────────────────────
+function makeTyper(dlgId,arrId){
+  let _tiv=null,_typing=false;
+  return{
+    type(text,cb){
+      _typing=true;const el=document.getElementById(dlgId),ar=document.getElementById(arrId);
+      ar.style.display='none';el.textContent='';let i=0;
+      clearInterval(_tiv);
+      _tiv=setInterval(()=>{if(i<text.length){el.textContent+=text[i++];}else{clearInterval(_tiv);_typing=false;ar.style.display='block';if(cb)cb();}},34);
+    },
+    skip(){
+      if(!_typing)return false;
+      clearInterval(_tiv);_typing=false;document.getElementById(arrId).style.display='block';return true;
+    },
+    isTyping(){return _typing;}
+  };
+}
+const ibTyper=makeTyper('ibDlg','ibArr');
+const wbTyper=makeTyper('wbDlg','wbArr');
+
+function setLayer(id){
+  ['introBattle','owLayer','wildBattle'].forEach(l=>document.getElementById(l).classList.toggle('active',l===id));
+}
+function setBot(id){
+  ['ibBot','owBot','wbBot'].forEach(b=>document.getElementById(b).classList.toggle('active',b===id));
+}
+
+// ─── HP UPDATE ───────────────────────────────────
+function updHP(fillId,numsId,hp,max){
+  const pct=Math.max(0,hp/max*100);
+  const f=document.getElementById(fillId);
+  f.style.width=pct+'%';f.style.background=pct>50?'#44aa22':pct>20?'#aaaa22':'#cc2222';
+  document.getElementById(numsId).textContent=Math.max(0,hp)+' / '+max;
+}
+function animHit(sprId){
+  const el=document.getElementById(sprId);
+  const c=sprId.startsWith('ib')||sprId==='wbSprA'||sprId==='wbSprB'?'sh-p':'sh-e';
+  el.classList.remove(c,'fl');void el.offsetWidth;el.classList.add(c,'fl');
+  setTimeout(()=>el.classList.remove(c,'fl'),500);
+}
+function setMvs(gridId,lblId,on,lbl){
+  document.querySelectorAll('#'+gridId+' .mv').forEach(b=>b.classList.toggle('off',!on));
+  if(lbl)document.getElementById(lblId).textContent=lbl;
+}
+
+// ════════════════════════════════════════
+// INTRO BATTLE (Alexia vs Arsenij)
+// ════════════════════════════════════════
+function initIB(){
+  ib={eHp:40,eMax:40,pHp:150,pMax:150,phase:'intro',
+    moves:JSON.parse(JSON.stringify(IB_MOVES))};
+  IB_MOVES.forEach((_,i)=>{ib.moves[i].pp=IB_MOVES[i].maxPp;updIBPP(i);document.querySelectorAll('#ibGrid .mv')[i].classList.remove('off');});
+  updHP('ibEHp','ibEHpN',ib.eHp,ib.eMax);updHP('ibPHp','ibPHpN',ib.pHp,ib.pMax);
+  document.getElementById('ibWin').classList.remove('show');
+  document.getElementById('ibElog').classList.remove('show');
+  setMvs('ibGrid','ibMenuLbl',false,'► Angriff wählen');
+  ibTyper.type('ALEXIA greift\nARSENIJ an!\n\nDrücke A zum\nStarten!');
+}
+function updIBPP(i){const m=ib.moves[i];document.getElementById('ibPP'+i).textContent='PP '+m.pp+'/'+m.maxPp;if(m.pp<=0)document.querySelectorAll('#ibGrid .mv')[i].classList.add('off');}
+
+function ibAtk(i){
+  if(ib.phase!=='player')return;
+  const mv=ib.moves[i];if(mv.pp<=0)return;
+  mv.pp--;updIBPP(i);ib.phase='anim';setMvs('ibGrid','ibMenuLbl',false,'► Warte...');
+  document.getElementById('ibElog').classList.remove('show');
+  const hit=Math.random()<mv.hit,crit=hit&&Math.random()<.1;
+  const dmg=hit?Math.floor(mv.power*(crit?1.5:1)*(.85+Math.random()*.15)):0;
+  let msg='ALEXIA setzt\n'+mv.name+' ein!';
+  if(!hit)msg+='\n\nDaneben!';else{msg+='\n'+dmg+' Schaden!';if(crit)msg+='\nKritischer Treffer!';}
+  ibTyper.type(msg,()=>{
+    if(hit){animHit('ibSprE');ib.eHp=Math.max(0,ib.eHp-dmg);updHP('ibEHp','ibEHpN',ib.eHp,ib.eMax);}
+    setTimeout(()=>{if(ib.eHp<=0){ibEnd();return;}ibEnemyTurn();},700);
+  });
+}
+function ibEnemyTurn(){
+  ib.phase='eturn';
+  const mv=IB_EMOVES[Math.floor(Math.random()*IB_EMOVES.length)];
+  const crit=Math.random()<.08,dmg=Math.floor(mv.power*(crit?1.5:1)*(.85+Math.random()*.15));
+  const el=document.getElementById('ibElog'),tEl=document.getElementById('ibElogTxt');
+  el.classList.add('show');tEl.textContent='';
+  let txt=mv.flavor+'\n'+dmg+' Schaden!';if(crit)txt+='\nKritischer Treffer!';
+  let i=0;
+  const iv=setInterval(()=>{if(i<txt.length){tEl.textContent+=txt[i++];}else{
+    clearInterval(iv);animHit('ibSprP');ib.pHp=Math.max(0,ib.pHp-dmg);updHP('ibPHp','ibPHpN',ib.pHp,ib.pMax);
+    setTimeout(()=>{
+      // Alexia can't lose
+      if(ib.pHp<=5){ib.pHp=5;updHP('ibPHp','ibPHpN',ib.pHp,ib.pMax);}
+      ib.phase='player';setMvs('ibGrid','ibMenuLbl',true,'► Was soll ALEXIA tun?');
+      document.getElementById('ibDlg').textContent='Was soll\nALEXIA tun?';
+      document.getElementById('ibArr').style.display='none';
+      document.getElementById('ibElog').classList.remove('show');
+    },800);
+  }},30);
+}
+function ibEnd(){
+  ib.phase='end';setMvs('ibGrid','ibMenuLbl',false,'');
+  ibTyper.type('ARSENIJ wurde\nbesiegt!\n\nALEXIA gewinnt! ♥',()=>{
+    setTimeout(()=>document.getElementById('ibWin').classList.add('show'),400);
+  });
+}
+
+// ════════════════════════════════════════
+// OVERWORLD
+// ════════════════════════════════════════
+function genMap(){
+  tileMap=[];
+  for(let y=0;y<MH;y++){tileMap[y]=[];for(let x=0;x<MW;x++){
+    if(x===0||x===MW-1||y===0||y===MH-1){tileMap[y][x]=3;continue;}
+    const r=Math.random();
+    if(r<.05)tileMap[y][x]=3;
+    else if(r<.12)tileMap[y][x]=2;
+    else if(r<.22)tileMap[y][x]=1;
+    else tileMap[y][x]=0;
+  }}
+  for(let py=5;py<8;py++)for(let px=13;px<16;px++)tileMap[py][px]=4;
+}
+function spawnWilds(){
+  wilds=[];
+  for(let i=0;i<6;i++){
+    let wx,wy;
+    do{wx=2+Math.floor(Math.random()*(MW-4));wy=2+Math.floor(Math.random()*(MH-4));}
+    while(tileMap[wy]?.[wx]===3||tileMap[wy]?.[wx]===4);
+    wilds.push({tx:wx,ty:wy,px:wx*TILE,py:wy*TILE,type:i%3,active:true,lv:2+Math.floor(Math.random()*10)});
+  }
+}
+
+function startOverworld(){
+  gameMode='overworld';
+  setLayer('owLayer');setBot('owBot');
+  genMap();spawnWilds();
+  ow={ax:2*TILE,ay:9*TILE,bx:3*TILE,by:9*TILE,frame:0,encounters:0,msg:'',msgTimer:0};
+  // reset wild battle PP
+  WB_MOVES.forEach((_,i)=>{wb_moves[i]=JSON.parse(JSON.stringify(WB_MOVES[i]));});
+  if(owRaf)cancelAnimationFrame(owRaf);
+  owTick=0;owLoop();
+}
+
+function owLoop(){
+  owRaf=requestAnimationFrame(owLoop);
+  owTick++;
+  const animTick=owTick%8===0;
+  if(animTick)ow.frame++;
+  handleOWInput();
+  drawOW();
+  if(animTick){const left=wilds.filter(w=>w.active).length;document.getElementById('owStatus').textContent='Wilde Pokemon: '+(6-left)+'/6 besiegt\nLauft zusammen durch die Wiese!';}
+}
+
+function handleOWInput(){
+  const SPD=2;
+  let dx=0,dy=0;
+  if(owKeys['ArrowLeft']||owKeys['a']||owKeys['A'])dx=-1;
+  else if(owKeys['ArrowRight']||owKeys['d']||owKeys['D'])dx=1;
+  else if(owKeys['ArrowUp']||owKeys['w']||owKeys['W'])dy=-1;
+  else if(owKeys['ArrowDown']||owKeys['s']||owKeys['S'])dy=1;
+  if(dx===0&&dy===0){ow.moving=false;return;}
+  ow.moving=true;
+  const nx=ow.ax+dx*SPD, ny=ow.ay+dy*SPD;
+  const tx=Math.floor((nx+8)/TILE), ty=Math.floor((ny+12)/TILE);
+  const blocked=tx<0||tx>=MW||ty<0||ty>=MH||tileMap[ty]?.[tx]===3||tileMap[ty]?.[tx]===4;
+  if(!blocked){
+    ow.ax=nx; ow.ay=ny;
+    const adx=ow.ax-ow.bx, ady=ow.ay-ow.by;
+    const dist=Math.sqrt(adx*adx+ady*ady);
+    if(dist>18){ow.bx+=adx/dist*SPD;ow.by+=ady/dist*SPD;}
+  }
+  const nearby=wilds.find(w=>w.active&&Math.abs(w.px-ow.ax)<14&&Math.abs(w.py-ow.ay)<14);
+  if(nearby){startWildBattle(nearby);}
+}
+
+function drawOW(){
+  const canvas=document.getElementById('owCanvas');
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,190,200);
+  const camX=ow.ax-95+TILE/2,camY=ow.ay-100+TILE/2;
+  const TC=['#9bbc0f','#306230','#9bbc0f','#2d5a1b','#4488cc'];
+  for(let ty=0;ty<MH;ty++)for(let tx=0;tx<MW;tx++){
+    const t=tileMap[ty][tx],sx=tx*TILE-camX,sy=ty*TILE-camY;
+    if(sx>-TILE&&sx<190&&sy>-TILE&&sy<210){
+      ctx.fillStyle=TC[t]||'#9bbc0f';ctx.fillRect(sx,sy,TILE,TILE);
+      if(t===1){ctx.fillStyle='#1a4a1a';ctx.fillRect(sx+1,sy+7,2,2);ctx.fillRect(sx+5,sy+6,2,3);ctx.fillRect(sx+8,sy+7,2,2);}
+      if(t===3){ctx.fillStyle='#0f380f';ctx.fillRect(sx,sy,TILE,TILE);ctx.fillStyle='#1a5a1a';ctx.fillRect(sx+2,sy+1,6,6);ctx.fillStyle='#0f2a0f';ctx.fillRect(sx+4,sy+6,2,4);}
+      if(t===2){ctx.fillStyle='#ffdd44';ctx.fillRect(sx+3,sy+3,4,4);ctx.fillStyle='#ff6666';ctx.fillRect(sx+4,sy+1,2,2);ctx.fillRect(sx+1,sy+4,2,2);ctx.fillRect(sx+7,sy+4,2,2);ctx.fillRect(sx+4,sy+7,2,2);}
+      if(t===4){ctx.fillStyle='#88aaee';ctx.fillRect(sx,sy,TILE,TILE);ctx.fillStyle='#aaccff';ctx.fillRect(sx+1,sy+1,3,2);}
+    }
+  }
+  // wild pokemon dots
+  wilds.forEach(w=>{if(!w.active)return;const sx=w.px-camX,sy=w.py-camY;if(sx>-18&&sx<200&&sy>-18&&sy<210)drawOWPokemon(ctx,sx,sy,w.type);});
+  // sprites
+  const axS=ow.ax-camX,ayS=ow.ay-camY,bxS=ow.bx-camX,byS=ow.by-camY;
+  drawOWSprite(ctx,bxS,byS,'arsenij',ow.moving?ow.frame:0);
+  drawOWSprite(ctx,axS,ayS,'alexia',ow.moving?ow.frame:0);
+  // message
+  if(ow.msgTimer>0){
+    ow.msgTimer--;
+    ctx.fillStyle='rgba(0,0,0,.75)';ctx.fillRect(2,152,186,44);
+    ctx.strokeStyle='#44ff88';ctx.lineWidth=1;ctx.strokeRect(2,152,186,44);
+    ctx.fillStyle='#44ff88';ctx.font='5px "Press Start 2P",monospace';
+    ow.msg.split('\n').forEach((line,i)=>ctx.fillText(line,8,165+i*10));
+  }
+}
+
+// ════════════════════════════════════════
+// WILD BATTLE (Alexia+Arsenij vs Wild)
+// ════════════════════════════════════════
+const WB_MOVES=[{name:"FEUERBALL",pp:10,maxPp:10,power:28,hit:.9},{name:"AQUAKNARRE",pp:15,maxPp:15,power:22,hit:.95},{name:"DONNERBLITZ",pp:10,maxPp:10,power:35,hit:.85},{name:"ARKTIS-STURM",pp:5,maxPp:5,power:45,hit:.8}];
+let wb_moves=JSON.parse(JSON.stringify(WB_MOVES));
+let currentWild=null;
+
+function startWildBattle(wild){
+  cancelAnimationFrame(owRaf);owRaf=null;
+  gameMode='wildBattle';currentWild=wild;
+  const maxHp=wild.lv*6+8;
+  wb={eHp:maxHp,eMax:maxHp,pHp:150,pMax:150,phase:'intro'};
+  setLayer('wildBattle');setBot('wbBot');
+  document.getElementById('wbEName').textContent=WILD_NAMES[wild.type];
+  document.getElementById('wbELv').textContent='Lv.'+wild.lv;
+  updHP('wbEHp','wbEHpN',wb.eHp,wb.eMax);updHP('wbPHp','wbPHpN',wb.pHp,wb.pMax);
+  document.getElementById('wbWin').classList.remove('show');
+  document.getElementById('wbElog').classList.remove('show');
+  setMvs('wbGrid','wbMenuLbl',false,'► Angriff wählen');
+  wb_moves.forEach((_,i)=>{document.getElementById('wbPP'+i).textContent='PP '+wb_moves[i].pp+'/'+wb_moves[i].maxPp;document.querySelectorAll('#wbGrid .mv')[i].classList.remove('off');});
+  drawWildPokemon(document.getElementById('wildC'),wild.type,wild.lv);
+  drawAlexia(document.getElementById('alexiaSmC'),3);
+  drawArsenij(document.getElementById('arsenijSmC'),3);
+  wbTyper.type('Ein wildes\n'+WILD_NAMES[wild.type]+' (Lv.'+wild.lv+')\ntaucht auf!\n\nDrücke A!');
+}
+
+function wbAtk(i){
+  if(wb.phase!=='player')return;
+  const mv=wb_moves[i];if(mv.pp<=0)return;
+  mv.pp--;document.getElementById('wbPP'+i).textContent='PP '+mv.pp+'/'+mv.maxPp;
+  if(mv.pp<=0)document.querySelectorAll('#wbGrid .mv')[i].classList.add('off');
+  wb.phase='anim';setMvs('wbGrid','wbMenuLbl',false,'► Warte...');
+  document.getElementById('wbElog').classList.remove('show');
+  const hit=Math.random()<mv.hit,crit=hit&&Math.random()<.12;
+  // Alexia Lv99 bonus damage
+  const dmg=hit?Math.floor(mv.power*1.6*(crit?1.5:1)*(.85+Math.random()*.15)):0;
+  let msg='ALEXIA setzt\n'+mv.name+' ein!';
+  if(!hit)msg+='\n\nDaneben!';else{msg+='\n'+dmg+' Schaden!';if(crit)msg+='\nKritischer Treffer!';}
+  wbTyper.type(msg,()=>{
+    if(hit){animHit('wbSprE');wb.eHp=Math.max(0,wb.eHp-dmg);updHP('wbEHp','wbEHpN',wb.eHp,wb.eMax);}
+    setTimeout(()=>{
+      if(wb.eHp<=0){
+        // Arsenij finisher!
+        wbTyper.type('ARSENIJ setzt\nKRATZER ein!\n\nFinisher!\n'+WILD_NAMES[currentWild.type]+'\nwurde besiegt!',()=>{
+          setTimeout(()=>{
+            document.getElementById('wbWinTxt').textContent=WILD_NAMES[currentWild.type]+'\nwurde besiegt!\n\nALEXIA & ARSENIJ\ngewinnen! ♥';
+            document.getElementById('wbWin').classList.add('show');
+          },400);
+        });
+        return;
+      }
+      wbEnemyTurn();
+    },700);
+  });
+}
+
+function wbEnemyTurn(){
+  wb.phase='eturn';
+  const wildAtks=[
+    {name:'ANGRIFF',power:8+currentWild.lv,flavor:WILD_NAMES[currentWild.type]+'\nsetzt ANGRIFF ein!'},
+    {name:'CRASHER',power:6+currentWild.lv,flavor:WILD_NAMES[currentWild.type]+'\nsetzt CRASHER ein!'},
+  ];
+  const mv=wildAtks[Math.floor(Math.random()*wildAtks.length)];
+  const crit=Math.random()<.06,dmg=Math.floor(mv.power*(crit?1.5:1)*(.85+Math.random()*.15));
+  // split damage between Alexia and Arsenij - always hits Arsenij more
+  const dmgA=Math.floor(dmg*.3),dmgB=Math.floor(dmg*.7);
+  const el=document.getElementById('wbElog'),tEl=document.getElementById('wbElogTxt');
+  el.classList.add('show');tEl.textContent='';
+  let txt=mv.flavor+'\nARSENIJ: '+dmgB+' Schaden!\nALEXIA: '+dmgA+' Schaden!';
+  if(crit)txt+='\nKritischer Treffer!';
+  let i=0;
+  const iv=setInterval(()=>{if(i<txt.length){tEl.textContent+=txt[i++];}else{
+    clearInterval(iv);
+    animHit('wbSprB');// Arsenij takes more
+    wb.pHp=Math.max(5,wb.pHp-dmgA); // Alexia can't die (Lv99)
+    updHP('wbPHp','wbPHpN',wb.pHp,wb.pMax);
+    setTimeout(()=>{
+      wb.phase='player';setMvs('wbGrid','wbMenuLbl',true,'► Was soll ALEXIA tun?');
+      document.getElementById('wbDlg').textContent='Was soll\nALEXIA tun?';
+      document.getElementById('wbArr').style.display='none';
+      document.getElementById('wbElog').classList.remove('show');
+    },800);
+  }},30);
+}
+
+function resumeOverworld(){
+  if(currentWild)currentWild.active=false;
+  ow.encounters=(ow.encounters||0)+1;
+  ow.msg=WILD_NAMES[currentWild.type]+' besiegt!\nALEXIA & ARSENIJ ♥';
+  ow.msgTimer=90;
+  gameMode='overworld';setLayer('owLayer');setBot('owBot');
+  owTick=0;owLoop();
+}
+
+// ════════════════════════════════════════
+// INPUT
+// ════════════════════════════════════════
+document.addEventListener('keydown',e=>{owKeys[e.key]=true;e.preventDefault&&['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)&&e.preventDefault();});
+document.addEventListener('keyup',e=>{owKeys[e.key]=false;});
+
+function dpPress(dir){
+  const map={u:'ArrowUp',d:'ArrowDown',l:'ArrowLeft',r:'ArrowRight'};
+  owKeys[map[dir]]=true;setTimeout(()=>{owKeys[map[dir]]=false;},150);
+}
+
+function btnA(){
+  if(gameMode==='introBattle'){
+    if(ibTyper.skip())return;
+    if(ib.phase==='intro'){ib.phase='player';setMvs('ibGrid','ibMenuLbl',true,'► Was soll ALEXIA tun?');ibTyper.type('Was soll\nALEXIA tun?');document.getElementById('ibArr').style.display='none';}
+  } else if(gameMode==='wildBattle'){
+    if(wbTyper.skip())return;
+    if(wb.phase==='intro'){wb.phase='player';setMvs('wbGrid','wbMenuLbl',true,'► Was soll ALEXIA tun?');wbTyper.type('Was soll\nALEXIA tun?');document.getElementById('wbArr').style.display='none';}
+  }
+}
+function btnB(){}
+
+// ════════════════════════════════════════
+// CHIPTUNE MUSIC ENGINE
+// ════════════════════════════════════════
+let audioCtx=null,musicNodes=[],musicPlaying=false,currentTheme=null;
+
+function getAudioCtx(){
+  if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function noteToHz(note){
+  const notes={'C':0,'C#':1,'D':2,'D#':3,'E':4,'F':5,'F#':6,'G':7,'G#':8,'A':9,'A#':10,'B':11};
+  const match=note.match(/([A-G]#?)(\d)/);
+  if(!match)return 0;
+  const n=notes[match[1]],oct=parseInt(match[2]);
+  return 440*Math.pow(2,(n-9+(oct-4)*12)/12);
+}
+
+function playChiptune(theme){
+  stopMusic();
+  musicPlaying=true;currentTheme=theme;
+  const ctx=getAudioCtx();
+  const master=ctx.createGain();master.gain.setValueAtTime(.18,ctx.currentTime);
+  master.connect(ctx.destination);
+
+  // Battle theme - fast, intense
+  const BATTLE=[
+    ['E4',.1],['E4',.1],['G4',.1],['E4',.1],['A4',.15],['G4',.1],['E4',.1],
+    ['D4',.1],['D4',.1],['F4',.1],['D4',.1],['G4',.15],['F4',.1],['D4',.1],
+    ['C4',.1],['E4',.1],['G4',.1],['A4',.1],['G4',.1],['E4',.1],['C4',.2],
+    ['B3',.1],['D4',.1],['F4',.1],['G4',.1],['F4',.1],['D4',.1],['B3',.2],
+    ['E4',.08],['F#4',.08],['G4',.08],['A4',.08],['B4',.08],['A4',.08],['G4',.08],['F#4',.08],
+    ['E4',.15],['G4',.15],['B4',.15],['E5',.25],
+  ];
+  // Overworld theme - cheerful, bouncy
+  const OVERWORLD=[
+    ['C5',.15],['E5',.15],['G5',.15],['C5',.15],['E5',.15],['G5',.3],
+    ['D5',.15],['F5',.15],['A5',.15],['D5',.15],['F5',.15],['A5',.3],
+    ['E5',.15],['G5',.15],['B5',.15],['E5',.15],['G5',.15],['B5',.3],
+    ['C5',.15],['G4',.15],['E5',.15],['C5',.15],['G5',.3],['E5',.3],
+    ['A4',.12],['C5',.12],['E5',.12],['A5',.12],['G5',.12],['F5',.12],['E5',.12],['D5',.12],
+    ['C5',.2],['E5',.2],['G5',.2],['C6',.4],
+  ];
+  // Wild battle theme - tense
+  const WILD=[
+    ['A3',.08],['A3',.08],['A4',.08],['G4',.08],['F#4',.08],['E4',.08],['D4',.08],['C#4',.08],
+    ['D4',.12],['F4',.12],['A4',.12],['D5',.2],['C5',.08],['B4',.08],
+    ['A3',.08],['C4',.08],['E4',.08],['A4',.08],['G4',.08],['F4',.08],['E4',.08],['D4',.08],
+    ['E4',.12],['G4',.12],['B4',.12],['E5',.2],['D5',.08],['C#5',.08],
+    ['F4',.1],['A4',.1],['C5',.1],['F5',.15],['E5',.1],['D5',.1],['C5',.1],['B4',.1],
+    ['A4',.2],['C5',.2],['E5',.2],['A5',.35],
+  ];
+
+  const seq=theme==='battle'?BATTLE:theme==='wild'?WILD:OVERWORLD;
+  const BPM=theme==='overworld'?1.0:.85;
+
+  function scheduleLoop(startTime){
+    if(!musicPlaying||currentTheme!==theme)return;
+    let t=startTime;
+    seq.forEach(([note,dur])=>{
+      const hz=noteToHz(note);
+      if(hz===0){t+=dur*BPM;return;}
+      // square wave via oscillator
+      const osc=ctx.createOscillator();
+      const g=ctx.createGain();
+      osc.type='square';
+      osc.frequency.setValueAtTime(hz,t);
+      g.gain.setValueAtTime(.0,t);
+      g.gain.linearRampToValueAtTime(.4,t+.01);
+      g.gain.setValueAtTime(.4,t+dur*BPM-.02);
+      g.gain.linearRampToValueAtTime(.0,t+dur*BPM);
+      osc.connect(g);g.connect(master);
+      osc.start(t);osc.stop(t+dur*BPM+.05);
+      musicNodes.push(osc);
+      t+=dur*BPM;
+    });
+    // bass line
+    const bassSeq=theme==='overworld'?
+      [['C3',.6],['G3',.6],['A3',.6],['F3',.6],['C3',.6],['G3',.6],['F3',.6],['G3',.6]]:
+      theme==='battle'?
+      [['E2',.4],['D2',.4],['C2',.4],['B2',.4],['E2',.4],['G2',.4],['A2',.4],['B2',.4]]:
+      [['A2',.5],['D2',.5],['E2',.5],['A2',.5],['F2',.5],['C2',.5],['G2',.5],['A2',.5]];
+    let bt=startTime;
+    bassSeq.forEach(([note,dur])=>{
+      const hz=noteToHz(note);
+      const osc=ctx.createOscillator();const g=ctx.createGain();
+      osc.type='triangle';osc.frequency.setValueAtTime(hz,bt);
+      g.gain.setValueAtTime(.15,bt);g.gain.linearRampToValueAtTime(.0,bt+dur*.9);
+      osc.connect(g);g.connect(master);osc.start(bt);osc.stop(bt+dur+.05);
+      musicNodes.push(osc);bt+=dur;
+    });
+    const loopDur=seq.reduce((a,[,d])=>a+d*BPM,0);
+    setTimeout(()=>scheduleLoop(ctx.currentTime+.05),Math.max((loopDur-.1)*1000,100));
+  }
+  scheduleLoop(ctx.currentTime+.1);
+}
+
+function stopMusic(){
+  musicPlaying=false;
+  musicNodes.forEach(n=>{try{n.stop();}catch(e){}});
+  musicNodes=[];
+}
+
+function switchTheme(theme){
+  if(currentTheme===theme)return;
+  playChiptune(theme);
+}
+
+// patch startOverworld and startWildBattle to switch music
+const _origStartOW=startOverworld;
+startOverworld=function(){_origStartOW();switchTheme('overworld');};
+const _origStartWB=startWildBattle;
+startWildBattle=function(w){_origStartWB(w);switchTheme('wild');};
+const _origResumeOW=resumeOverworld;
+resumeOverworld=function(){_origResumeOW();switchTheme('overworld');};
+
+// ════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════
+drawArsenij(document.getElementById('arsenijC'));
+drawAlexia(document.getElementById('alexiaC'));
+wb_moves=JSON.parse(JSON.stringify(WB_MOVES));
+initIB();
+// start music on first user interaction
+document.addEventListener('click',()=>{if(!musicPlaying)playChiptune('battle');},{once:true});
+document.addEventListener('touchstart',()=>{if(!musicPlaying)playChiptune('battle');},{once:true});
+</script>
+</body>
+</html>
