@@ -158,7 +158,7 @@ html,body{
 <body>
 
 <div id="stage">
-  <div id="hint">Ein Geschenk\nwartet auf dich...\nKlick um es\nzu öffnen! 🎁</div>
+  <div id="hint">Ein Geschenk<br>wartet auf dich...<br>Klick um es<br>zu öffnen! 🎁</div>
 
   <div id="giftWrap" onclick="clickGift()">
     <canvas id="giftCanvas" style="width:100%;height:100%;image-rendering:pixelated"></canvas>
@@ -282,7 +282,7 @@ function clickGift(){
     'Noch einmal!! 🌸',
   ];
   if(clicks<CLICKS_NEEDED){
-    document.getElementById('hint').textContent=hints[clicks-1]||hints[0];
+    document.getElementById('hint').innerHTML=hints[clicks-1]||hints[0];
   }
   if(clicks>=CLICKS_NEEDED){
     opened=true;
@@ -536,7 +536,7 @@ function resetGame(){
   document.getElementById('dots').style.display='flex';
   document.getElementById('hint').style.display='block';
   document.getElementById('hint').style.opacity='1';
-  document.getElementById('hint').textContent='Ein Geschenk\nwartet auf dich...\nKlick um es\nzu öffnen! 🎁';
+  document.getElementById('hint').innerHTML='Ein Geschenk<br>wartet auf dich...<br>Klick um es<br>zu öffnen! 🎁';
   document.getElementById('bouquetScreen').style.display='none';
   document.getElementById('againBtn').style.display='none';
   document.querySelectorAll('.dot').forEach(d=>d.classList.remove('filled'));
