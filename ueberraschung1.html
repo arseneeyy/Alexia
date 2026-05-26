@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Für Alexia 🎁</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+
+html,body{
+  width:100%;height:100%;
+  background:#0d0020;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Press Start 2P',monospace;
+  overflow:hidden;
+  touch-action:manipulation;
+}
+
+/* STARS */
+.star{position:fixed;background:#fff;border-radius:50%;pointer-events:none;animation:twinkle 2s ease-in-out infinite}
+@keyframes twinkle{0%,100%{opacity:.2}50%{opacity:1}}
+
+/* MAIN STAGE */
+#stage{
+  position:relative;
+  width:min(420px,95vw);
+  height:min(580px,92vh);
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:0;
+}
+
+/* HINT TEXT */
+#hint{
+  font-size:clamp(7px,2vw,10px);
+  color:#cc88ff;
+  margin-bottom:18px;
+  text-align:center;
+  line-height:2.2;
+  letter-spacing:1px;
+  transition:opacity .4s;
+}
+
+/* GIFT BOX WRAPPER */
+#giftWrap{
+  position:relative;
+  cursor:pointer;
+  user-select:none;
+  -webkit-tap-highlight-color:transparent;
+  width:min(220px,55vw);
+  aspect-ratio:1;
+}
+#giftWrap:active{transform:scale(.96)}
+
+/* SHAKE */
+@keyframes shake{
+  0%,100%{transform:translateX(0) rotate(0deg)}
+  15%{transform:translateX(-8px) rotate(-4deg)}
+  30%{transform:translateX(8px) rotate(4deg)}
+  45%{transform:translateX(-6px) rotate(-3deg)}
+  60%{transform:translateX(6px) rotate(3deg)}
+  75%{transform:translateX(-3px) rotate(-1deg)}
+  90%{transform:translateX(3px) rotate(1deg)}
+}
+.shake{animation:shake .5s ease}
+
+/* PROGRESS DOTS */
+#dots{
+  display:flex;gap:10px;margin-top:20px;
+}
+.dot{
+  width:12px;height:12px;border-radius:50%;
+  background:#2a0a4e;border:2px solid #6633aa;
+  transition:all .3s ease;
+}
+.dot.filled{background:#cc66ff;border-color:#ff99ff;box-shadow:0 0 8px #cc66ff}
+
+/* OPEN ANIMATION */
+@keyframes lidFly{
+  0%{transform:translateY(0) rotate(0deg);opacity:1}
+  100%{transform:translateY(-160px) rotate(-25deg);opacity:0}
+}
+@keyframes boxOpen{
+  0%{transform:scaleY(1)}
+  100%{transform:scaleY(.85);transform-origin:bottom}
+}
+@keyframes burstIn{
+  0%{transform:scale(0) translateY(60px);opacity:0}
+  60%{transform:scale(1.08) translateY(-10px);opacity:1}
+  100%{transform:scale(1) translateY(0);opacity:1}
+}
+
+/* BOUQUET SCREEN */
+#bouquetScreen{
+  display:none;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  animation:fadeIn .6s ease forwards;
+}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+#bouquetCanvas{
+  image-rendering:pixelated;
+  width:min(340px,88vw);
+  height:auto;
+  animation:burstIn .8s cubic-bezier(.22,1,.36,1) forwards;
+}
+
+#bouquetMsg{
+  font-size:clamp(8px,2.5vw,13px);
+  color:#ffaad4;
+  text-align:center;
+  line-height:2.4;
+  margin-top:20px;
+  animation:fadeIn 1s ease forwards .8s;
+  opacity:0;
+}
+
+#fromMsg{
+  font-size:clamp(6px,1.8vw,9px);
+  color:#aa66cc;
+  margin-top:14px;
+  animation:fadeIn 1s ease forwards 1.4s;
+  opacity:0;
+}
+
+/* PETALS */
+.fpetal{
+  position:fixed;pointer-events:none;border-radius:60% 40% 60% 40%;
+  animation:petalFall linear forwards;
+}
+@keyframes petalFall{
+  0%{opacity:1;transform:translateY(-20px) rotate(0deg) translateX(0)}
+  100%{opacity:0;transform:translateY(110vh) rotate(600deg) translateX(80px)}
+}
+
+/* AGAIN BTN */
+#againBtn{
+  display:none;
+  margin-top:18px;
+  background:transparent;
+  border:2px solid #aa44cc;
+  color:#cc88ff;
+  font-family:'Press Start 2P',monospace;
+  font-size:clamp(6px,1.8vw,8px);
+  padding:10px 18px;
+  cursor:pointer;
+  border-radius:3px;
+  animation:fadeIn 1s ease forwards 2s;
+  opacity:0;
+}
+#againBtn:hover{background:#2a0a4e}
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <div id="hint">Ein Geschenk<br>wartet auf dich...<br>Klick um es<br>zu öffnen! 🎁</div>
+
+  <div id="giftWrap" onclick="clickGift()">
+    <canvas id="giftCanvas" style="width:100%;height:100%;image-rendering:pixelated"></canvas>
+  </div>
+
+  <div id="dots">
+    <div class="dot" id="d0"></div>
+    <div class="dot" id="d1"></div>
+    <div class="dot" id="d2"></div>
+    <div class="dot" id="d3"></div>
+    <div class="dot" id="d4"></div>
+  </div>
+
+  <div id="bouquetScreen">
+    <canvas id="bouquetCanvas" width="340" height="320"></canvas>
+    <div id="bouquetMsg">Für dich, Alexia ♥</div>
+    <div id="fromMsg">— von Arsenij</div>
+    <button id="againBtn" onclick="resetGame()">Nochmal öffnen 🎁</button>
+  </div>
+</div>
+
+<script>
+// ── STARS ────────────────────────────────────────
+for(let i=0;i<55;i++){
+  const s=document.createElement('div');s.className='star';
+  const sz=Math.random()<.12?3:Math.random()<.35?2:1;
+  s.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;animation-delay:${Math.random()*3}s;animation-duration:${1.5+Math.random()*2.5}s`;
+  document.body.appendChild(s);
+}
+
+// ── DRAW GIFT BOX ────────────────────────────────
+const CLICKS_NEEDED=5;
+let clicks=0;
+let opened=false;
+
+const gc=document.getElementById('giftCanvas');
+const gctx=gc.getContext('2d');
+gc.width=200;gc.height=200;
+
+function drawGift(ctx,W,H,clickN){
+  ctx.clearRect(0,0,W,H);
+  const shake=clickN>0&&clickN<CLICKS_NEEDED;
+  // box body
+  const bx=20,by=90,bw=160,bh=100;
+  // gradient box
+  ctx.fillStyle='#cc2255';
+  ctx.fillRect(bx,by,bw,bh);
+  // darker bottom
+  ctx.fillStyle='#991133';
+  ctx.fillRect(bx,by+bh-18,bw,18);
+  // box shine
+  ctx.fillStyle='rgba(255,255,255,.12)';
+  ctx.fillRect(bx+6,by+6,bw-12,14);
+  // lid
+  const lx=14,ly=70,lw=172,lh=28;
+  ctx.fillStyle='#ee3366';
+  ctx.fillRect(lx,ly,lw,lh);
+  ctx.fillStyle='rgba(255,255,255,.15)';
+  ctx.fillRect(lx+4,ly+4,lw-8,10);
+
+  // ribbon vertical
+  ctx.fillStyle='#ffdd00';
+  ctx.fillRect(90,by,20,bh); // body ribbon
+  ctx.fillRect(88,ly,24,lh); // lid ribbon
+
+  // bow loops
+  const bows=[
+    // left loop
+    {cx:74,cy:66,rx:22,ry:14,angle:-.4},
+    // right loop
+    {cx:126,cy:66,rx:22,ry:14,angle:.4},
+  ];
+  bows.forEach(b=>{
+    ctx.save();
+    ctx.translate(b.cx,b.cy);ctx.rotate(b.angle);
+    ctx.fillStyle='#ffcc00';
+    ctx.beginPath();ctx.ellipse(0,0,b.rx,b.ry,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#ffee55';
+    ctx.beginPath();ctx.ellipse(-4,-4,b.rx*.55,b.ry*.5,0,0,Math.PI*2);ctx.fill();
+    ctx.restore();
+  });
+  // bow center knot
+  ctx.fillStyle='#ffaa00';
+  ctx.beginPath();ctx.arc(100,66,9,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#ffdd44';
+  ctx.beginPath();ctx.arc(97,63,4,0,Math.PI*2);ctx.fill();
+
+  // polka dots on box
+  ctx.fillStyle='rgba(255,255,255,.18)';
+  [[40,110],[70,130],[130,108],[150,135],[50,155],[110,160],[80,100],[140,155]].forEach(([x,y])=>{
+    ctx.beginPath();ctx.arc(x,y,5,0,Math.PI*2);ctx.fill();
+  });
+
+  // click indicator — small hearts appear progressively
+  for(let i=0;i<clickN;i++){
+    const hx=[30,160,90,145,55][i],hy=[80,85,185,175,178][i];
+    ctx.fillStyle='#ff88bb';
+    ctx.font='14px serif';
+    ctx.fillText('♥',hx,hy);
+  }
+}
+
+drawGift(gctx,200,200,0);
+
+// ── CLICK HANDLER ────────────────────────────────
+function clickGift(){
+  if(opened)return;
+  clicks++;
+  // fill dot
+  if(clicks<=CLICKS_NEEDED)document.getElementById('d'+(clicks-1)).classList.add('filled');
+  // shake
+  const gw=document.getElementById('giftWrap');
+  gw.classList.remove('shake');void gw.offsetWidth;gw.classList.add('shake');
+  drawGift(gctx,200,200,clicks);
+
+  // update hint
+  const hints=[
+    'Noch mehr klicken! 🎁',
+    'Weiter! Fast da... ✨',
+    'Noch zweimal! 💫',
+    'Noch einmal!! 🌸',
+  ];
+  if(clicks<CLICKS_NEEDED){
+    document.getElementById('hint').innerHTML=hints[clicks-1]||hints[0];
+  }
+  if(clicks>=CLICKS_NEEDED){
+    opened=true;
+    setTimeout(()=>openGift(),400);
+  }
+}
+
+// ── OPEN GIFT ────────────────────────────────────
+function openGift(){
+  document.getElementById('giftWrap').style.display='none';
+  document.getElementById('dots').style.display='none';
+  document.getElementById('hint').style.opacity='0';
+  setTimeout(()=>{document.getElementById('hint').style.display='none';},400);
+
+  // petal shower
+  petalShower();
+
+  // show bouquet
+  const bs=document.getElementById('bouquetScreen');
+  bs.style.display='flex';
+  drawBouquet();
+  setTimeout(()=>{document.getElementById('againBtn').style.display='block';},2200);
+
+  // music
+  startMusic();
+}
+
+// ── DRAW BOUQUET ─────────────────────────────────
+function drawBouquet(){
+  const canvas=document.getElementById('bouquetCanvas');
+  const ctx=canvas.getContext('2d');
+  const W=340,H=320;
+  ctx.clearRect(0,0,W,H);
+
+  // wrapping paper cone
+  ctx.fillStyle='#cc3366';
+  ctx.beginPath();ctx.moveTo(170,H-10);ctx.lineTo(80,180);ctx.lineTo(260,180);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#ff6699';
+  ctx.beginPath();ctx.moveTo(170,H-10);ctx.lineTo(80,180);ctx.lineTo(130,180);ctx.closePath();ctx.fill();
+  // stripes on cone
+  ctx.strokeStyle='rgba(255,255,255,.25)';ctx.lineWidth=4;
+  for(let i=0;i<5;i++){
+    ctx.beginPath();ctx.moveTo(95+i*20,180);ctx.lineTo(170,H-10);ctx.stroke();
+  }
+  // ribbon on cone
+  ctx.fillStyle='#ffdd00';ctx.fillRect(155,175,30,14);
+
+  // stems
+  const stemData=[
+    [130,175,120,80],[150,175,145,60],[170,175,170,45],[190,175,195,60],[210,175,200,80],
+    [140,175,100,100],[160,175,130,70],[180,175,210,70],[200,175,240,95],
+    [145,175,108,120],[175,175,170,30],[195,175,225,110],
+  ];
+  ctx.strokeStyle='#228822';ctx.lineWidth=3;
+  stemData.forEach(([x1,y1,x2,y2])=>{
+    ctx.beginPath();
+    ctx.moveTo(x1,y1);
+    ctx.bezierCurveTo(x1,y1-20,x2,y2+30,x2,y2);
+    ctx.stroke();
+  });
+
+  // FLOWERS — big varied bouquet
+  const flowers=[
+    // big roses center
+    {x:170,y:45, type:'rose',    size:32, c1:'#ff2255',c2:'#ff6688',c3:'#ffaaaa'},
+    {x:130,y:72, type:'rose',    size:28, c1:'#ee1144',c2:'#ff5577',c3:'#ff99aa'},
+    {x:210,y:68, type:'rose',    size:28, c1:'#cc0033',c2:'#ee4466',c3:'#ff8899'},
+    // tulips
+    {x:100,y:98, type:'tulip',   size:22, c1:'#ff6600',c2:'#ff9933',c3:'#ffcc66'},
+    {x:240,y:94, type:'tulip',   size:22, c1:'#cc44ff',c2:'#dd88ff',c3:'#eeccff'},
+    {x:108,y:118,type:'tulip',   size:18, c1:'#ff4488',c2:'#ff88bb',c3:'#ffccdd'},
+    {x:232,y:112,type:'tulip',   size:18, c1:'#ff8800',c2:'#ffaa44',c3:'#ffdd88'},
+    // daisies
+    {x:145,y:62, type:'daisy',   size:20, c1:'#ffffff',c2:'#ffffaa',c3:'#ffee00'},
+    {x:195,y:58, type:'daisy',   size:20, c1:'#ffddff',c2:'#ffaaff',c3:'#ffee44'},
+    {x:155,y:88, type:'daisy',   size:16, c1:'#ffffff',c2:'#eeffee',c3:'#ffcc00'},
+    {x:185,y:85, type:'daisy',   size:16, c1:'#ffeeee',c2:'#ffcccc',c3:'#ffaa33'},
+    // small fillers
+    {x:120,y:90, type:'small',   size:12, c1:'#ff99cc',c2:'#ffccee',c3:'#ffffff'},
+    {x:220,y:88, type:'small',   size:12, c1:'#aaddff',c2:'#cceeff',c3:'#ffffff'},
+    {x:160,y:38, type:'small',   size:14, c1:'#ffaadd',c2:'#ffccee',c3:'#ffffff'},
+    {x:178,y:32, type:'small',   size:10, c1:'#ddaaff',c2:'#eeccff',c3:'#ffffff'},
+    {x:225,y:115,type:'small',   size:10, c1:'#ffffaa',c2:'#ffeeaa',c3:'#ffffff'},
+    {x:115,y:130,type:'small',   size:10, c1:'#ffaaee',c2:'#ffccff',c3:'#ffffff'},
+    // leaves
+    {x:90, y:120,type:'leaf',    size:18, c1:'#33aa33',c2:'#55cc44',c3:'#88dd66'},
+    {x:250,y:116,type:'leaf',    size:18, c1:'#228822',c2:'#44aa33',c3:'#66cc55'},
+    {x:135,y:105,type:'leaf',    size:14, c1:'#33aa44',c2:'#55bb55',c3:'#88dd77'},
+    {x:205,y:100,type:'leaf',    size:14, c1:'#228833',c2:'#44aa44',c3:'#77cc66'},
+  ];
+
+  flowers.forEach(f=>drawFlower(ctx,f));
+
+  // sparkles
+  ctx.fillStyle='#ffffaa';
+  [[85,70],[255,75],[165,20],[140,45],[200,42],[270,108],[75,140]].forEach(([x,y])=>{
+    drawSparkle(ctx,x,y,6);
+  });
+}
+
+function drawFlower(ctx,f){
+  const {x,y,type,size,c1,c2,c3}=f;
+  if(type==='rose'){
+    // layered rose
+    const layers=[[size,c1],[size*.75,c2],[size*.5,c3]];
+    layers.forEach(([r,c])=>{
+      for(let i=0;i<7;i++){
+        const a=(i/7)*Math.PI*2;
+        ctx.fillStyle=c;
+        ctx.beginPath();
+        ctx.ellipse(x+Math.cos(a)*r*.45,y+Math.sin(a)*r*.45,r*.42,r*.32,a,0,Math.PI*2);
+        ctx.fill();
+      }
+    });
+    ctx.fillStyle=c3;ctx.beginPath();ctx.arc(x,y,size*.22,0,Math.PI*2);ctx.fill();
+  } else if(type==='tulip'){
+    // tulip cup shape
+    ctx.fillStyle=c1;
+    ctx.beginPath();
+    ctx.moveTo(x-size*.5,y+size*.2);
+    ctx.bezierCurveTo(x-size*.55,y-size*.4,x-size*.2,y-size*.8,x,y-size*.9);
+    ctx.bezierCurveTo(x+size*.2,y-size*.8,x+size*.55,y-size*.4,x+size*.5,y+size*.2);
+    ctx.closePath();ctx.fill();
+    ctx.fillStyle=c2;
+    ctx.beginPath();
+    ctx.moveTo(x-size*.2,y+size*.1);
+    ctx.bezierCurveTo(x-size*.25,y-size*.35,x-size*.05,y-size*.75,x,y-size*.85);
+    ctx.bezierCurveTo(x+size*.05,y-size*.75,x+size*.1,y-size*.3,x+size*.05,y+size*.1);
+    ctx.closePath();ctx.fill();
+    // highlight
+    ctx.fillStyle='rgba(255,255,255,.22)';
+    ctx.beginPath();ctx.ellipse(x-size*.12,y-size*.4,size*.1,size*.28,-.3,0,Math.PI*2);ctx.fill();
+  } else if(type==='daisy'){
+    // petals around center
+    const np=10;
+    for(let i=0;i<np;i++){
+      const a=(i/np)*Math.PI*2;
+      ctx.fillStyle=c1;
+      ctx.beginPath();
+      ctx.ellipse(x+Math.cos(a)*size*.55,y+Math.sin(a)*size*.55,size*.32,size*.18,a,0,Math.PI*2);
+      ctx.fill();
+    }
+    ctx.fillStyle=c2;ctx.beginPath();ctx.arc(x,y,size*.3,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=c3;ctx.beginPath();ctx.arc(x,y,size*.18,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,.5)';ctx.beginPath();ctx.arc(x-size*.06,y-size*.06,size*.07,0,Math.PI*2);ctx.fill();
+  } else if(type==='small'){
+    // tiny round blossom
+    for(let i=0;i<6;i++){
+      const a=(i/6)*Math.PI*2;
+      ctx.fillStyle=c1;
+      ctx.beginPath();ctx.ellipse(x+Math.cos(a)*size*.5,y+Math.sin(a)*size*.5,size*.35,size*.25,a,0,Math.PI*2);ctx.fill();
+    }
+    ctx.fillStyle=c2;ctx.beginPath();ctx.arc(x,y,size*.28,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=c3;ctx.beginPath();ctx.arc(x,y,size*.14,0,Math.PI*2);ctx.fill();
+  } else if(type==='leaf'){
+    ctx.fillStyle=c1;
+    ctx.beginPath();
+    ctx.moveTo(x,y+size*.5);
+    ctx.bezierCurveTo(x-size*.7,y,x-size*.6,y-size*.8,x,y-size*.5);
+    ctx.bezierCurveTo(x+size*.6,y-size*.8,x+size*.7,y,x,y+size*.5);
+    ctx.closePath();ctx.fill();
+    ctx.strokeStyle=c3;ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(x,y+size*.5);ctx.lineTo(x,y-size*.5);ctx.stroke();
+  }
+}
+
+function drawSparkle(ctx,x,y,size){
+  ctx.fillStyle='#ffffaa';
+  [[0,-1],[0,1],[-1,0],[1,0],[-.7,-.7],[.7,-.7],[-.7,.7],[.7,.7]].forEach(([dx,dy])=>{
+    ctx.fillRect(x+dx*size-1,y+dy*size-1,2,2);
+  });
+  ctx.fillStyle='#ffffff';ctx.fillRect(x-1,y-1,2,2);
+}
+
+// ── PETALS ───────────────────────────────────────
+function petalShower(){
+  const colors=['#ff6699','#ff99cc','#ffcc44','#cc88ff','#ff4488','#ffaadd','#ffee66','#dd88ff'];
+  for(let i=0;i<40;i++){
+    setTimeout(()=>{
+      const p=document.createElement('div');p.className='fpetal';
+      const sz=6+Math.random()*10;
+      const c=colors[Math.floor(Math.random()*colors.length)];
+      p.style.cssText=`left:${Math.random()*100}vw;top:-20px;width:${sz}px;height:${sz*.65}px;background:${c};z-index:100;animation-duration:${2+Math.random()*2}s;animation-delay:0s`;
+      document.body.appendChild(p);
+      setTimeout(()=>p.remove(),4500);
+    },i*80);
+  }
+}
+
+// ── MUSIC ────────────────────────────────────────
+let audioCtx=null,musicPlaying=false,musicNodes=[];
+function noteHz(n){const m=n.match(/([A-G]#?)(\d)/);if(!m)return 0;const t={'C':0,'C#':1,'D':2,'D#':3,'E':4,'F':5,'F#':6,'G':7,'G#':8,'A':9,'A#':10,'B':11};return 440*Math.pow(2,(t[m[1]]-9+(+m[2]-4)*12)/12);}
+
+function startMusic(){
+  if(musicPlaying)return;
+  if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  musicPlaying=true;
+  const ctx=audioCtx;
+  const master=ctx.createGain();master.gain.setValueAtTime(.15,ctx.currentTime);master.connect(ctx.destination);
+
+  const melody=[
+    ['C5',.25],['E5',.25],['G5',.25],['E5',.25],['C5',.5],
+    ['D5',.25],['F5',.25],['A5',.25],['F5',.25],['D5',.5],
+    ['E5',.25],['G5',.25],['B5',.25],['G5',.25],['E5',.5],
+    ['C5',.25],['E5',.25],['G5',.25],['A5',.25],['G5',.5],
+    ['F5',.25],['A5',.25],['C6',.25],['A5',.25],['F5',.5],
+    ['G5',.25],['B5',.25],['D6',.25],['B5',.25],['G5',.5],
+    ['E5',.2],['G5',.2],['B5',.2],['G5',.2],['E5',.2],['C5',.4],
+    ['D5',.25],['F5',.25],['A5',.25],['C6',.5],['C6',.5],
+  ];
+  const bass=[
+    ['C3',.5],['G3',.5],['A3',.5],['F3',.5],
+    ['C3',.5],['G3',.5],['F3',.5],['G3',.5],
+    ['F3',.5],['C3',.5],['G3',.5],['E3',.5],
+    ['C3',.5],['F3',.5],['G3',.5],['C3',.5],
+  ];
+
+  function loop(t){
+    if(!musicPlaying)return;
+    let mt=t;
+    melody.forEach(([n,d])=>{
+      const hz=noteHz(n);if(!hz){mt+=d;return;}
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.type='triangle';o.frequency.setValueAtTime(hz,mt);
+      g.gain.setValueAtTime(0,mt);g.gain.linearRampToValueAtTime(.45,mt+.02);
+      g.gain.setValueAtTime(.45,mt+d-.03);g.gain.linearRampToValueAtTime(0,mt+d);
+      o.connect(g);g.connect(master);o.start(mt);o.stop(mt+d+.05);
+      musicNodes.push(o);mt+=d;
+    });
+    let bt=t;
+    bass.forEach(([n,d])=>{
+      const hz=noteHz(n);
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.type='sine';o.frequency.setValueAtTime(hz,bt);
+      g.gain.setValueAtTime(.2,bt);g.gain.linearRampToValueAtTime(0,bt+d*.85);
+      o.connect(g);g.connect(master);o.start(bt);o.stop(bt+d+.05);
+      musicNodes.push(o);bt+=d;
+    });
+    const dur=melody.reduce((a,[,d])=>a+d,0);
+    setTimeout(()=>loop(ctx.currentTime+.05),(dur-.1)*1000);
+  }
+  loop(ctx.currentTime+.1);
+}
+
+// ── RESET ────────────────────────────────────────
+function resetGame(){
+  clicks=0;opened=false;musicPlaying=false;
+  musicNodes.forEach(n=>{try{n.stop()}catch(e){}});musicNodes=[];
+  drawGift(gctx,200,200,0);
+  document.getElementById('giftWrap').style.display='block';
+  document.getElementById('dots').style.display='flex';
+  document.getElementById('hint').style.display='block';
+  document.getElementById('hint').style.opacity='1';
+  document.getElementById('hint').innerHTML='Ein Geschenk<br>wartet auf dich...<br>Klick um es<br>zu öffnen! 🎁';
+  document.getElementById('bouquetScreen').style.display='none';
+  document.getElementById('againBtn').style.display='none';
+  document.querySelectorAll('.dot').forEach(d=>d.classList.remove('filled'));
+}
+</script>
+</body>
+</html>
